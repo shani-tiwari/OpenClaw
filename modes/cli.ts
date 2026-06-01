@@ -9,10 +9,10 @@ export async function runCLiMode() {
     const mode = await select({
         message: 'Select a CLI sub-mode',
         options: [
-            {value: 'agent',label: 'Agent mode'},
-            {value: 'ask',label: 'Ask mode'},
-            {value: 'plan',label: 'Plan mode'},
-            {value: 'exit',label: 'Exit'},
+            { value: 'agent', label: 'Agent mode' },
+            { value: 'ask'  , label: 'Ask mode'   },
+            { value: 'plan' , label: 'Plan mode'  },
+            { value: 'exit' , label: 'Exit'       },
         ],
     });
 
