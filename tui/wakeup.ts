@@ -1,6 +1,7 @@
 import {select, isCancel} from "@clack/prompts";
 import chalk from "chalk";
 import figlet from "figlet";
+import { runCLiMode } from "../modes/cli";
 
 
 
@@ -19,7 +20,33 @@ export async function runWakeUp() {
         ascii = figlet.textSync('OpenClaw',{font: "standard"});
     }  ;
     printBanner(ascii);
+
+    /* selection of modes */
+    const mode = await select({
+        message: 'Select a mode',
+        options: [
+            {value: 'cli',label: 'CLI mode'},
+            {value: 'telegram',label: 'Telegram mode'},
+            {value: 'exit',label: 'Exit'},
+        ],
+    });
+
+    /* if user cancels the mode selection */
+    if(isCancel(mode || mode === 'exit')){
+        console.log(chalk.red('Cancelled'));
+        process.exit(0);
+    };
+
+    /* start mode */
+    if(mode === 'cli'){
+        await runCLiMode();
+    }else if(mode === 'telegram'){
+        console.log(chalk.green('OpenCLAW Telegram mode started'));
+    }
 };
+
+
+
 
 function printBanner(ascii: string){
     const bannerLines = ascii.replace(/\s+$/, '').split('\n');
