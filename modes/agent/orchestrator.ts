@@ -1,5 +1,7 @@
 import { select, isCancel, text } from "@clack/prompts";
 import chalk from "chalk";
+import { defaultAgentConfig } from "./types";
+import { ActionTracker } from "./action-tracker";
 
 export async function runAgentMode() {
     console.log(chalk.green('OpenCLAW Agent mode started'));
@@ -15,5 +17,6 @@ export async function runAgentMode() {
         process.exit(0);
     };
 
-    // const config = 
+    const config = defaultAgentConfig();
+    const tracker = new ActionTracker();
 }
