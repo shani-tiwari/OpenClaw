@@ -7,6 +7,7 @@ import { createAgentTools } from "./agent-tools";
 import { stepCountIs, tool, ToolLoopAgent } from "ai";
 import { getAgentModel } from "../../ai";
 import { renderTerminalMD } from "../../tui/terminal-md";
+import { runApprovalFlow } from "./approval";
 
 export async function runAgentMode() {
     console.log(chalk.green('OpenCLAW Agent mode started'));
@@ -59,6 +60,22 @@ export async function runAgentMode() {
     if(result.text?.trim()){
         console.log(renderTerminalMD(result.text));
     };
+
+    const ok = await runApprovalFlow(tracker);
+    if(!ok) return executor.clearStaging();
+
+    const {errors} = executor.applyApprovedFromTracker();
+    if(errors.length > 0){
+        console.log(chalk.red(errors.join("\n")));
+    }
+    else{
+        console.log(chalk.green('✅ All changes applied'));
+    };
+    
+    executor.clearStaging();
+
+    console.log(chalk.blue('Agent finished. Press any key to exit'));
+    // await waitForAnyKey();
 
 
 }
