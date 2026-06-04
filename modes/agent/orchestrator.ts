@@ -6,6 +6,7 @@ import { ToolExecutor } from "./tool-executor";
 import { createAgentTools } from "./agent-tools";
 import { stepCountIs, tool, ToolLoopAgent } from "ai";
 import { getAgentModel } from "../../ai";
+import { renderTerminalMD } from "../../tui/terminal-md";
 
 export async function runAgentMode() {
     console.log(chalk.green('OpenCLAW Agent mode started'));
@@ -53,12 +54,11 @@ export async function runAgentMode() {
             };
         }
     });
+
+    /* here to get the markdown form the AI in the end */
     if(result.text?.trim()){
-        console.log(chalk.green('complete emoji'), 
-        chalk.bold('done'),
-        chalk.dim(result.text.trim())
-        );
+        console.log(renderTerminalMD(result.text));
     };
-    console.log("\n " + chalk.green("Operation completed") + `\n ${result.text?.trim()}`)
+
 
 }
