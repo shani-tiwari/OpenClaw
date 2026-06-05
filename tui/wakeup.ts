@@ -2,6 +2,7 @@ import {select, isCancel} from "@clack/prompts";
 import chalk from "chalk";
 import figlet from "figlet";
 import { runCLiMode } from "../modes/cli";
+import { runTelegramMode } from "../modes/telegram";
 
 
 
@@ -42,6 +43,7 @@ export async function runWakeUp() {
         await runCLiMode();
     }else if(mode === 'telegram'){
         console.log(chalk.green('OpenCLAW Telegram mode started'));
+        await runTelegramMode();
     }
 };
 
