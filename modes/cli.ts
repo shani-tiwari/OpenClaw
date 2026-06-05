@@ -1,6 +1,7 @@
 import chalk from "chalk";
 import {select, isCancel} from "@clack/prompts";
 import { runAgentMode } from "./agent/orchestrator";
+import { runAskMode } from "./ask/orchestrator";
 
 
 
@@ -31,6 +32,7 @@ export async function runCLiMode() {
         console.log(chalk.green('OpenCLAW plan mode started'));
     }else if(mode === 'ask'){
         console.log(chalk.green('OpenCLAW ask mode started'));
+        await runAskMode();
     }
 
 }
