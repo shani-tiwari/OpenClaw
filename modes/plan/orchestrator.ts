@@ -9,6 +9,8 @@ import { defaultAgentConfig } from "../agent/types";
 import { runApprovalFlow } from "../agent/approval";
 import { renderTerminalMD } from "../../tui/terminal-md";
 import { generatePlan } from "./planner";
+import { printPlan, selectSteps } from "./selection";
+import type { PlanStep } from "./types";
 
 
 export async function runPlanMode(): Promise<void>{
@@ -18,8 +20,59 @@ export async function runPlanMode(): Promise<void>{
     if(isCancel(goal) || !goal) return;
 
     const plan = await generatePlan(goal);
+    printPlan(plan);
+
+    const steps = await selectSteps(plan);
+    if(steps.length === 0) return;
+
+    const proceed = await confirm({
+        message: `Execute ${steps.length} steps?`,
+        initialValue: true,
+    });
 
 
+    const config = defaultAgentConfig();
+    const actionTracker = new ActionTracker();
+    const executor = new ToolExecutor(config, actionTracker);
+
+    const model = getAgentModel();
+
+
+    const tools = {...createAgentTools(executor)};
     
+
+    for(const step of steps){
+        console.log(chalk.blue(`\n ${step.title}\n`));
+
+        const agent = new ToolLoopAgent({
+            model: getAgentModel(),
+            stopWhen: stepCountIs(30),
+            tools
+        });
+
+        const result = await agent.generate({prompt: stepPrompt(plan.goal, step)});
+        if(result.text){
+            return console.log(renderTerminalMD(result.text));
+        };
+
+        const ok = await runApprovalFlow(actionTracker);
+        if(!ok) return executor.clearStaging();
+
+        const {errors} = executor.applyApprovedFromTracker();
+        if(errors.length){
+            console.log(chalk.red(`Failed to apply changes`))
+            for(const e of errors) console.log(chalk.red(`- ${e}`)) ;
+        }else{
+            console.log(chalk.green(' ✅ changes applied successfully '));
+        };
+        executor.clearStaging();
+    };
+
     
+};
+
+
+
+function stepPrompt(goal: string ,step: PlanStep): string{
+    return [`Goal: ${goal}, Step: ${step.title}\n, ${step.description}`].join('\n');
 }
