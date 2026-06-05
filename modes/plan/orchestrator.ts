@@ -11,6 +11,7 @@ import { renderTerminalMD } from "../../tui/terminal-md";
 import { generatePlan } from "./planner";
 import { printPlan, selectSteps } from "./selection";
 import type { PlanStep } from "./types";
+import { createWebTools } from "./web-tools";
 
 
 export async function runPlanMode(): Promise<void>{
@@ -38,7 +39,7 @@ export async function runPlanMode(): Promise<void>{
     const model = getAgentModel();
 
 
-    const tools = {...createAgentTools(executor)};
+    const tools = {...createAgentTools(executor), ...createWebTools(actionTracker)};
     
 
     for(const step of steps){

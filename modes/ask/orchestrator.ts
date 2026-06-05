@@ -8,6 +8,7 @@ import { ToolExecutor } from "../agent/tool-executor";
 import { defaultAgentConfig } from "../agent/types";
 import { renderTerminalMD } from "../../tui/terminal-md";
 import { runApprovalFlow } from "../agent/approval";
+import { createWebTools } from "../plan/web-tools";
 
 function createAskTools(executor: ToolExecutor) {
   return {
@@ -130,9 +131,7 @@ export async function runAskMode() {
     const actionTracker = new ActionTracker();
     const executor = new ToolExecutor(config, actionTracker);
 
-    // todo: web-search tool(web-scraping)
-
-    const tools = {...createAskTools(executor)};
+    const tools = {...createAskTools(executor), ...createWebTools(actionTracker)};
 
     const agent =  new ToolLoopAgent({
         model: getAgentModel(),

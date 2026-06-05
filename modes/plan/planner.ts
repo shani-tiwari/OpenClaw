@@ -13,6 +13,7 @@ import { ActionTracker } from "../agent/action-tracker";
 import { ToolExecutor } from "../agent/tool-executor";
 import { defaultAgentConfig } from "../agent/types";
 import type { Plan, PlanStep } from "./types";
+import { createWebTools } from "./web-tools";
 
 /* schema - how our output shoulf formed */
 const PlanSchema = z.object({
@@ -147,8 +148,11 @@ export async function generatePlan(goal: string) {
   const actionTracker = new ActionTracker();
   const executor = new ToolExecutor(config, actionTracker);
 
-  const tools = { ...readOnlyTools(executor) };
-  const hasWeb = false;
+  const hasWeb = !!process.env.FIRECRAWL_API_KEY;
+  
+  const tools = { ...readOnlyTools(executor), ...(hasWeb ? createWebTools(actionTracker) : {}) };
+
+
   const model = wrapLanguageModel({
     model: getAgentModel(),
     middleware: extractJsonMiddleware(),
