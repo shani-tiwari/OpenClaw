@@ -8,6 +8,7 @@ import { defaultAgentConfig, type AgentConfig } from "../agent/types";
 import { createWebTools } from "../plan/web-tools";
 import type { Plan, PlanStep } from "../plan/types";
 import { replyMD } from "./text";
+import { withTelegramLoader, type TelegramLoaderCtx } from "../../loader";
 
 function readOnlyConfig(): AgentConfig {
   const base = defaultAgentConfig();
@@ -234,7 +235,7 @@ function extraWebTool(tracker: ActionTracker){
 
 /* ask mode for telegram */
 export async function runAskTG(
-    ctx: {reply: (t: string, o?: object)=> Promise<unknown>}, 
+    ctx: TelegramLoaderCtx, 
     question:string )
     {
         const config = readOnlyConfig();
@@ -247,7 +248,9 @@ export async function runAskTG(
         });
 
 
-        const {text} = await agent.generate({prompt: question});
+        const {text} = await withTelegramLoader(ctx, "Thinking about your question...", () =>
+            agent.generate({ prompt: question }),
+        );
         await replyMD(ctx, text || ("no answer"));
         
 };
@@ -256,7 +259,7 @@ export async function runAskTG(
 
 /* plan steps for telegram */
 export async function runPlanStepsTG(
-    ctx: {reply: (t: string, o?: object)=> Promise<unknown>}, 
+    ctx: TelegramLoaderCtx, 
     chatId: number,
     plan: Plan,
     steps: PlanStep[],
@@ -269,13 +272,18 @@ export async function runPlanStepsTG(
         const tools = {...createAgentTools(executor), ...extraWebTool(tracker)};
 
         for(const step of steps){
-            await ctx.reply(`Executing: ${step.title} \n`, {parse_mode: "Markdown"});
-            const prompt = [`Goal: ${plan.goal}\nStep: ${step.title}, `, step.description].join('\n');
-            const agent = new ToolLoopAgent({
-                ...agentOptions(config, 30),
-                tools
-            });
-            const {text} = await agent.generate({prompt: goal});
+            const {text} = await withTelegramLoader(
+                ctx,
+                `Executing: ${step.title}`,
+                () => {
+                    const prompt = [`Goal: ${plan.goal}\nStep: ${step.title}, `, step.description].join('\n');
+                    const agent = new ToolLoopAgent({
+                        ...agentOptions(config, 30),
+                        tools
+                    });
+                    return agent.generate({ prompt });
+                },
+            );
             const trimmed = (text || "").trim();
             if(trimmed) await replyMD(ctx, trimmed);
 
@@ -289,7 +297,7 @@ export async function runPlanStepsTG(
 
 /* agent mode for telegram */
 export async function runAgentTG(
-    ctx: {reply: (t: string, o?: object)=> Promise<unknown>}, 
+    ctx: TelegramLoaderCtx, 
     chatId: number,
     goal: string )
     {
@@ -303,7 +311,9 @@ export async function runAgentTG(
         });
 
 
-        const {text} = await agent.generate({prompt: goal});
+        const {text} = await withTelegramLoader(ctx, "Agent is working on your task...", () =>
+            agent.generate({ prompt: goal }),
+        );
         const trimmed = (text || "").trim();
         if(trimmed) await replyMD(ctx, trimmed);
 

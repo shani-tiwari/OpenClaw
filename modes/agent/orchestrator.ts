@@ -7,6 +7,7 @@ import { createAgentTools } from "./agent-tools";
 import { stepCountIs, tool, ToolLoopAgent } from "ai";
 import { getAgentModel } from "../../ai";
 import { renderTerminalMD } from "../../tui/terminal-md";
+import { createCliLoader } from "../../loader";
 import { runApprovalFlow } from "./approval";
 
 export async function runAgentMode() {
@@ -39,11 +40,14 @@ export async function runAgentMode() {
         tools,
     });
 
+    const loader = createCliLoader("Agent is working on your task...");
+    loader.start();
     const result = await agentTools.generate({
         prompt: goal.trim(),
         onStepFinish: ({toolCalls})=>{
             if(toolCalls?.length > 0){
-                chalk.blue(`tool call: ${toolCalls}`);
+                const last = toolCalls[toolCalls.length - 1]!;
+                loader.update(`Running ${String(last.toolName)}...`);
             };
             for(const tc of toolCalls){
                 const preview = JSON.stringify(tc.input).slice(0, 160);     
@@ -55,6 +59,7 @@ export async function runAgentMode() {
             };
         }
     });
+    loader.stop("Agent finished");
 
     /* here to get the markdown form the AI in the end */
     if(result.text?.trim()){

@@ -12,6 +12,7 @@ import {
   type PlanSession,
 } from "./plan-session";
 import { approvalDiff, approvalSessions } from "./approval-session";
+import { withTelegramLoader, type TelegramLoaderCtx } from "../../loader";
 
 export function registerHandler(bot: Telegraf) {
 
@@ -39,7 +40,6 @@ export function registerHandler(bot: Telegraf) {
       });
     }
 
-    await ctx.reply("processing your request");
     void runAskTG(ctx, query).catch(console.error);
   });
 
@@ -55,9 +55,6 @@ export function registerHandler(bot: Telegraf) {
       });
     }
 
-    await ctx.reply("Agent is working on your task.", {
-      parse_mode: "Markdown",
-    });
     void runAgentTG(ctx, ctx.chat.id, query).catch(console.error);
   });
 
@@ -73,9 +70,10 @@ export function registerHandler(bot: Telegraf) {
       });
     }
 
-    await ctx.reply("Generating on your task.", { parse_mode: "Markdown" });
     void (async () => {
-      const plan = await generatePlan(query);
+      const plan = await withTelegramLoader(ctx, "Generating plan...", () =>
+        generatePlan(query),
+      );
       const session: PlanSession = {
         plan,
         selected: new Set(plan.steps.map((step) => step.id)),
@@ -143,7 +141,7 @@ export function registerHandler(bot: Telegraf) {
     );
     await ctx.answerCbQuery();
 
-    void runPlanStepsTG(ctx, ctx.chat!.id, plan, steps, plan.goal).catch(console.error);
+    void runPlanStepsTG(ctx as TelegramLoaderCtx, ctx.chat!.id, plan, steps, plan.goal).catch(console.error);
   });
 
   bot.action('approval_diff', async (ctx) => {

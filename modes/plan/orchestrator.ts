@@ -12,6 +12,7 @@ import { generatePlan } from "./planner";
 import { printPlan, selectSteps } from "./selection";
 import type { PlanStep } from "./types";
 import { createWebTools } from "./web-tools";
+import { withCliLoader } from "../../loader";
 
 
 export async function runPlanMode(): Promise<void>{
@@ -20,7 +21,11 @@ export async function runPlanMode(): Promise<void>{
     const goal = await text({ message:"What is your main goal?"});
     if(isCancel(goal) || !goal) return;
 
-    const plan = await generatePlan(goal);
+    const plan = await withCliLoader(
+        "Generating plan...",
+        () => generatePlan(goal),
+        { successMessage: "Plan ready" },
+    );
     printPlan(plan);
 
     const steps = await selectSteps(plan);
@@ -51,7 +56,11 @@ export async function runPlanMode(): Promise<void>{
             tools
         });
 
-        const result = await agent.generate({prompt: stepPrompt(plan.goal, step)});
+        const result = await withCliLoader(
+            `Executing step: ${step.title}...`,
+            () => agent.generate({ prompt: stepPrompt(plan.goal, step) }),
+            { successMessage: `Step complete: ${step.title}` },
+        );
         if(result.text){
             return console.log(renderTerminalMD(result.text));
         };

@@ -25,7 +25,7 @@ export async function runTelegramMode(){
     await new Promise<void>((resolve) =>{
         const stop = () => {
             bot.stop('SIGINT');
-            console.log(chalk.cyan("[-] Telegram Stopped"));
+            console.log(chalk.cyan("[-] Telegram Stopped")); 
             resolve();
         };
         process.once('SIGINT', stop);

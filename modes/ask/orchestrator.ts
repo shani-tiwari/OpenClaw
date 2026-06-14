@@ -9,6 +9,7 @@ import { defaultAgentConfig } from "../agent/types";
 import { renderTerminalMD } from "../../tui/terminal-md";
 import { runApprovalFlow } from "../agent/approval";
 import { createWebTools } from "../plan/web-tools";
+import { withCliLoader } from "../../loader";
 
 function createAskTools(executor: ToolExecutor) {
   return {
@@ -140,7 +141,11 @@ export async function runAskMode() {
     });
 
 
-    const result = await agent.generate({prompt: question.trim()});
+    const result = await withCliLoader(
+        "Thinking about your question...",
+        () => agent.generate({ prompt: question.trim() }),
+        { successMessage: "Answer ready" },
+    );
     const answer = result.text?.trim() || 'no answer';
 
     console.log("\n" + chalk.bold(chalk.green("Answer:")));

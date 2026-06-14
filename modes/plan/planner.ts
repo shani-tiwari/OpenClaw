@@ -6,7 +6,6 @@ import {
   tool,
   wrapLanguageModel,
 } from "ai";
-import chalk from "chalk";
 import z from "zod";
 import { getAgentModel } from "../../ai";
 import { ActionTracker } from "../agent/action-tracker";
@@ -157,8 +156,6 @@ export async function generatePlan(goal: string) {
     model: getAgentModel(),
     middleware: extractJsonMiddleware(),
   });
-
-  console.log(chalk.yellow("🔍 Generating Plan... \n"));
 
   const result = await generateText({
     model,
