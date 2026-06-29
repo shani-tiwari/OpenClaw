@@ -41,6 +41,8 @@ export class ToolExecutor {
   private overlay = new Map<string, string>();
   /* Staged deletions - stored here */
   private deleted = new Set<string>();
+  /* Staged creations - stored here */
+  private created = new Set<string>();
 
   /* Normalized path for os specific seprators */
   private readonly norm = (rel: string): string => {
@@ -219,12 +221,13 @@ export class ToolExecutor {
     const key = this.norm(rel);
     const abs = this.resolveSafe(rel);
 
-    if (fs.existsSync(abs) && !this.deleted.has(key)) {
+    if (fs.existsSync(abs) && !this.deleted.has(key) && !this.created.has(key)) {
       throw new Error(`create_file: already exists: ${rel}`);
     }
 
     this.deleted.delete(key);
     this.overlay.set(key, content);
+    this.created.add(key);
 
     this.tracker.log({
       type: "file_create",
@@ -494,7 +497,10 @@ export class ToolExecutor {
       (x) => x.type === "folder_create" && x.status === "approved",
     )) {
       try {
-        fs.mkdirSync(this.resolveSafe(a.path), { recursive: true });
+        const targetDir = this.resolveSafe(a.path);
+        if (!fs.existsSync(targetDir)) {
+          fs.mkdirSync(targetDir, { recursive: true });
+        }
       } catch (e) {
         errors.push(String(e));
       }
@@ -520,7 +526,10 @@ export class ToolExecutor {
           fs.rmSync(this.resolveSafe(p), { force: true });
         } else {
           const target = this.resolveSafe(p);
-          fs.mkdirSync(path.dirname(target), { recursive: true });
+          const parentDir = path.dirname(target);
+          if (!fs.existsSync(parentDir)) {
+            fs.mkdirSync(parentDir, { recursive: true });
+          }
           fs.writeFileSync(target, a.details.after ?? "", "utf8");
         }
       } catch (e) {
@@ -552,5 +561,6 @@ export class ToolExecutor {
   clearStaging(): void{
     this.overlay.clear();
     this.deleted.clear();
+    this.created.clear();
   }
 }
